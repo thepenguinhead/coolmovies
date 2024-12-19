@@ -1,0 +1,259 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ media.title }} - Details{% endblock %}
+
+{% block content %}
+<style>
+    .gold {
+        color: gold;
+    }
+
+    .gray {
+        color: gray;
+    }
+    /* Changed the letter and border color to zomp for the add to favorites button */
+    .btn.btn-outline-success{
+        color: #4da394;
+        border-color: #4da394;
+    }
+    /* Changed the hover color to zomp for the add to favorites button */
+    .btn.btn-outline-success:hover{
+        background-color: #4da394;
+        color: white;
+        border: none;
+    }
+</style>
+<div class="d-flex justify-content-center mt-5">
+    <div class="text-center">
+        <h2>{{ media.title }}</h2>
+
+        <div class="d-flex justify-content-center mt-5">
+            <img src="{{ media.poster_url }}" alt="{{ media.title }} Poster" class="img-fluid my-3"
+                style="max-width: 300px; border-radius: 15px;">
+
+            {% if trailer %}
+            <p style="padding-right: 1vh;"> </p>
+            <video style="border-radius: 15px; background-color: black;" width="420" height="444" controls=""
+                class="img-fluid my-3">
+                <source src="{{ trailer }}" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+            {% endif %}
+        </div>
+
+        <p style="padding-top: 2vh;"><strong>Type:</strong> {{ 'TV Show' if media_type == 'tvshow' else 'Movie' }}</p>
+
+        {% if media_type == 'movie' and media.releaseYear %}
+        <p><strong>Release Year:</strong> {{ media.releaseYear }}</p>
+        {% elif media_type == 'tvshow' and media.release_date %}
+        <p><strong>Release Year:</strong> {{ media.release_date.year }}</p>
+        {% else %}
+        <p><strong>Release Year:</strong> N/A</p>
+        {% endif %}
+
+        {% if media_type == 'movie' %}
+        {% if media.genre %}
+        <p><strong>Genre:</strong> {{ media.genre }}</p>
+        {% endif %}
+        {% if media.averageRating %}
+        <p><strong>Average Rating:</strong> {{ media.averageRating }}/10</p>
+        {% else %}
+        <p><strong>Average Rating:</strong> N/A </p>
+        {% endif %}
+        {% elif media_type == 'tvshow' %}
+        {% if media.seasons %}
+        <p><strong>Seasons:</strong> {{ media.seasons }}</p>
+        {% endif %}
+        {% if media.episodes %}
+        <p><strong>Episodes:</strong> {{ media.episodes }}</p>
+        {% endif %}
+        {% if media.genre %}
+        <p><strong>Genre:</strong> {{ media.genre }}</p>
+        {% endif %}
+        {% if media.description %}
+        <p><strong>Description:</strong> {{ media.description }}</p>
+        {% endif %}
+        {% if media.rating %}
+        <p><strong>Average Rating:</strong> {{ media.rating }}/10</p>
+        {% else %}
+        <p><strong>Average Rating:</strong> N/A </p>
+        {% endif %}
+        {% endif %}
+
+        <div class="d-grid gap-2">
+            <button type="button" class="btn btn-primary" id ="review_button" data-bs-toggle="modal" data-bs-target="#reviewModal">Write
+                Review</button>
+            <button type="button" class="btn btn-outline-success" id="favoriteButton"
+                onclick="toggleFavorite('{{ media_type }}', '{{ media.id }}')">
+                {% if media in current_user.favorites %}
+                Remove from Favorites
+                {% else %}
+                Add to Favorites
+                {% endif %}
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmationModalLabel">Confirmation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="confirmationMessage">
+                <!-- Message will be set dynamically -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<div style="padding-top: 2vh;">
+    <h3 style="text-align: center;">{{ media_type|capitalize }} Reviews</h3>
+    {% if reviews %}
+    {% for review in reviews %}
+    <div class="container" tabindex="-1">
+        <div class="bg-body-tertiary p-3 rounded">
+            <h5><a href="{{url_for('main.profile', id=review.user_id)}}" id="review_username">{{review.author.username}} </a>
+                {% if current_user.is_admin %}
+                <button id="delete_button" class="btn btn-danger btn-sm float-end" onclick="confirmDelete('{{ url_for('main.delete_review', review_id=review.id) }}')">X</button>
+                {% endif %}
+            </h5>
+            <hr>
+            <p>Rating:
+                {% for i in range(1, 6) %}
+                <span class="star {% if i <= review.rating %}gold{% else %}gray{% endif %}">&#9733;</span>
+                {% endfor %}
+            </p>
+            <p>Review Date: {{ review.created_at.year }}/{{ review.created_at.month }}/{{ review.created_at.day }}</p>
+            <p id = "user_comment">{{ review.comment }}</p>
+        </div>
+    </div>
+    <p></p>
+    {% endfor %}
+    {% else %}
+    <p id ="no_reviews" style="text-align: center">Be The First To Review This {{ media_type|capitalize }}!</p>
+    {% endif %}
+</div>
+<!-- Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Confirm Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete this review?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Go Back</button>
+                <form id="deleteForm" method="POST" style="display: inline;">
+                    {{ form.hidden_tag() }}
+                    <button type="submit" class="btn btn-danger" id="confirm_delete">Confirm</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="reviewModal" tabindex="-1" aria-labelledby="reviewModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="reviewModalLabel">Write a Review</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="reviewForm">
+                    <div class="mb-3">
+                        <label for="rating" class="form-label">Rating</label>
+                        <div id="starRating" class="star-rating">
+                            <span id="star1" class="star" data-value="1">&#9733;</span>
+                            <span id="star2"  class="star" data-value="2">&#9733;</span>
+                            <span id="star3"  class="star" data-value="3">&#9733;</span>
+                            <span id="star4"  class="star" data-value="4">&#9733;</span>
+                            <span id="star5"  class="star" data-value="5">&#9733;</span>
+                        </div>
+                        <input type="hidden" id="rating" name="rating" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="comment" class="form-label">Comment</label>
+                        <textarea class="form-control" id="comment" name="comment" rows="3" required></textarea>
+                    </div>
+                    <button id="submit_review" type="submit" class="btn btn-primary">Submit</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    document.querySelectorAll('.star-rating .star').forEach(star => {
+        star.addEventListener('click', function () {
+            const rating = this.getAttribute('data-value');
+            document.getElementById('rating').value = rating;
+            document.querySelectorAll('.star-rating .star').forEach(s => {
+                s.style.color = s.getAttribute('data-value') <= rating ? 'gold' : 'gray';
+            });
+        });
+    });
+
+    document.getElementById('reviewForm').addEventListener('submit', function (event) {
+        event.preventDefault();
+        const rating = document.getElementById('rating').value;
+        const comment = document.getElementById('comment').value;
+        fetch("{{ url_for('main.media_detail', media_type=media_type, media_id=media.id) }}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({ rating: rating, comment: comment })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error submitting review');
+                }
+            });
+    });
+
+    function toggleFavorite(mediaType, mediaId) {
+        const favoriteButton = document.getElementById('favoriteButton');
+        const isFavorite = favoriteButton.textContent.includes('Remove from Favorites');
+        const url = isFavorite ?
+            `{{ url_for('main.remove_from_favorites', media_type='__type__', media_id='__id__') }}`.replace('__type__', mediaType).replace('__id__', mediaId) :
+            `{{ url_for('main.add_to_favorites', media_type='__type__', media_id='__id__') }}`.replace('__type__', mediaType).replace('__id__', mediaId);
+
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token() }}'
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('confirmationMessage').textContent = data.message;
+                    const confirmationModal = new bootstrap.Modal(document.getElementById('confirmationModal'));
+                    confirmationModal.show();
+                    favoriteButton.textContent = isFavorite ? 'Add to Favorites' : 'Remove from Favorites';
+                } else {
+                    alert(data.message);
+                }
+            });
+    }
+
+    function confirmDelete(url) {
+        const deleteForm = document.getElementById('deleteForm');
+        deleteForm.action = url;
+        const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+        deleteModal.show();
+    }
+</script>
+{% endblock %}

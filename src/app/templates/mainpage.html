@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+
+{% block title %}Recommendations{% endblock %}
+
+{% block content %}
+<style>
+    .recommendations-container-wrapper {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .recommendations-container {
+        display: flex;
+        overflow-x: auto;
+        white-space: nowrap;
+        padding: 0 40px;
+    }
+
+    .recommendations-container .card {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        width: auto;
+        min-width: 187.5px;
+        margin: 0 10px;
+        vertical-align: top;
+    }
+
+    .recommendations-container .card img {
+        width: 100%;
+        height: auto;
+        cursor: pointer;
+    }
+
+    .recommendations-container .card-body {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        text-align: center;
+        width: 100%;
+        flex-grow: 1;
+    }
+
+    .recommendations-container .card-title {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+    }
+
+    .recommendations-container .card-text {
+        white-space: normal;
+        /* Allow line breaks */
+        overflow-wrap: break-word;
+        /* Break long words if necessary */
+        text-align: left;
+        /* Optional: Align text to the left for better readability */
+    }
+
+    .arrow {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        background-color: rgba(0, 0, 0, 0.5);
+        color: white;
+        border: none;
+        padding: 10px;
+        cursor: pointer;
+        z-index: 1;
+    }
+
+    .arrow-left {
+        left: 0;
+    }
+
+    .arrow-right {
+        right: 0;
+    }
+</style>
+
+
+<div class="container mt-5">
+    <h2>Recommended Movies</h2>
+    {% if recommendations_movies %}
+    <div class="recommendations-container-wrapper">
+        <button class="arrow arrow-left"
+            onclick="scrollRecommendations('recommendedMoviesContainer', -300)">&#10094;</button>
+        <div class="recommendations-container" id="recommendedMoviesContainer">
+            {% for movie in recommendations_movies %}
+            <div class="card">
+                <a href="{{ url_for('main.media_detail', media_type='movie', media_id=movie.id) }}">
+                    <img src="{{ movie.poster_url }}" class="card-img-top" alt="{{ movie.title }} Poster">
+                </a>
+                <div class="card-body">
+                    <h5 class="card-title">{{ movie.title }}</h5>
+                    <p class="card-text"><strong>Genre:</strong> {{ movie.genre }}</p>
+                    <p class="card-text"><strong>Release Year:</strong> {{ movie.releaseYear }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <button class="arrow arrow-right"
+            onclick="scrollRecommendations('recommendedMoviesContainer', 300)">&#10095;</button>
+    </div>
+    {% else %}
+    <p>No recommended movies available.</p>
+    {% endif %}
+
+    <h2>Recommended TV Shows</h2>
+    {% if recommendations_tvshows %}
+    <div class="recommendations-container-wrapper">
+        <button class="arrow arrow-left"
+            onclick="scrollRecommendations('recommendedTVShowsContainer', -300)">&#10094;</button>
+        <div class="recommendations-container" id="recommendedTVShowsContainer">
+            {% for tvshow in recommendations_tvshows %}
+            <div class="card">
+                <a href="{{ url_for('main.media_detail', media_type='tvshow', media_id=tvshow.id) }}">
+                    <img src="{{ tvshow.poster_url }}" class="card-img-top" alt="{{ tvshow.title }} Poster">
+                </a>
+                <div class="card-body">
+                    <h5 class="card-title">{{ tvshow.title }}</h5>
+                    <p class="card-text"><strong>Genre:</strong> {{ tvshow.genre }}</p>
+                    <p class="card-text"><strong>Release Year:</strong> {{ tvshow.release_date.year }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <button class="arrow arrow-right"
+            onclick="scrollRecommendations('recommendedTVShowsContainer', 300)">&#10095;</button>
+    </div>
+    {% else %}
+    <p>No recommended TV shows available.</p>
+    {% endif %}
+</div>
+
+<script>
+    function scrollRecommendations(containerId, scrollAmount) {
+        const container = document.getElementById(containerId);
+        container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+</script>
+{% endblock %}

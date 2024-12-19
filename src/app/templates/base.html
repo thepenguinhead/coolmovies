@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}The Coolest Team{% endblock %}</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    {% block head %}{% endblock %}
+    <style>
+        .navbar-center {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .navbar-center .navbar-brand {
+            margin-right: 10px;
+            color: #4da394;
+        }
+
+        .navbar-center .form-control {
+            width: 300px;
+        }
+
+        @media (max-width: 992px) {
+            .navbar-center {
+                position: static;
+                transform: none;
+                width: 100%;
+                margin-top: 10px;
+            }
+        }
+
+        .autocomplete-dropdown {
+            position: absolute;
+            z-index: 1000;
+            background-color: white;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            width: 100%;
+            top: 100%;
+            left: 0;
+        }
+
+        .autocomplete-dropdown .dropdown-item {
+            padding: 8px 16px;
+            cursor: pointer;
+        }
+
+        .autocomplete-dropdown .dropdown-item:hover {
+            background-color: #f1f1f1;
+        }
+        /*changed the color of the search button to zomp */
+        .btn.btn-outline-success.me-2 {
+            color: #4da394;
+            border-color: #4da394;
+        }
+        /*changed the hover color of the search button to zomp */
+        .btn.btn-outline-success.me-2:hover {
+            background-color: #4da394;
+            color: white;
+            border: none;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+            <!-- Toggler for responsive navbar -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <!-- Navbar Content -->
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <!-- Centered Search Bar -->
+                <div class="navbar-center position-relative">
+                    <a class="navbar-brand" href="{{ url_for('main.home') }}">CoolestTeam</a>
+                    <form class="d-flex" action="{{ url_for('main.search_results') }}" method="get">
+                        <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search"
+                            name="query" id="search-input">
+                        <button class="btn btn-outline-success me-2" type="submit">Search</button>
+                        <a class="btn btn-outline-primary" href="{{ url_for('main.random_route') }}">Random</a>
+                        <a class="btn btn-outline-primary ms-2" href="{{ url_for('main.mainpage') }}">Recommended</a>
+                        <div id="autocomplete-dropdown" class="autocomplete-dropdown"></div>
+                    </form>
+                </div>
+                <ul class="navbar-nav ms-auto">
+                    <!-- Right-aligned navigation links -->
+                    {% if current_user.is_authenticated %}
+                    <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                        <!-- Dropdown Menu -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                                aria-expanded="false">
+                                Menu
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                </li>
+                                <li><a class="dropdown-item" href="{{ url_for('main.logout') }}">Sign Out</a></li>
+                            </ul>
+                        </li>
+                        <!-- Username Link -->
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('main.profile',id=current_user.id) }}">{{
+                                current_user.username }}</a>
+                        </li>
+                        <!-- Display profile picture -->
+                        <li class="nav-item">
+                            <img src="{{ url_for('static', filename='profilepic/' ~ current_user.profile_picture) }}" 
+                                 alt="{{ current_user.username }}" 
+                                 class="img-thumbnail rounded-circle" 
+                                 style="width: 50px; height: 50px; object-fit: cover;">
+                        </li>
+                    </ul>
+                    {% else %}
+                    <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('main.login') }}">Login</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('main.signup') }}">Sign Up</a>
+                        </li>
+                    </ul>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <!-- Main Content -->
+    <div class="container" style="margin-top: 80px;">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Bootstrap JS (with Popper) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    {% block scripts %}{% endblock %}
+
+    <script type="text/javascript">
+        function simple_action(target) {
+            window.location.replace(target);
+        }
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const searchInput = document.getElementById('search-input');
+            const dropdown = document.getElementById('autocomplete-dropdown');
+
+            searchInput.addEventListener('input', function () {
+                const query = searchInput.value;
+                if (query.length > 2) {
+                    fetch(`{{ url_for('main.autocomplete') }}?query=${query}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            dropdown.innerHTML = '';
+                            data.forEach(item => {
+                                const dropdownItem = document.createElement('a');
+                                dropdownItem.classList.add('dropdown-item');
+                                dropdownItem.href = `{{ url_for('main.media_detail', media_type='__type__', media_id='__id__') }}`.replace('__type__', item.type).replace('__id__', item.id);
+                                dropdownItem.textContent = item.title;
+                                dropdown.appendChild(dropdownItem);
+                            });
+                            dropdown.style.display = 'block';
+                        });
+                } else {
+                    dropdown.style.display = 'none';
+                }
+            });
+
+            document.addEventListener('click', function (event) {
+                if (!searchInput.contains(event.target) && !dropdown.contains(event.target)) {
+                    dropdown.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>
+
+<style>
+    /* Center the search bar */
+    .navbar-center {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 50%;
+    }
+
+    /* Adjust search bar width on larger screens */
+    @media (min-width: 992px) {
+        .navbar-center {
+            width: 40%;
+        }
+    }
+
+    /* Ensure the search bar doesn't overlap on smaller screens */
+    @media (max-width: 991px) {
+        .navbar-center {
+            position: static;
+            transform: none;
+            width: 100%;
+            margin-top: 10px;
+        }
+    }
+</style>

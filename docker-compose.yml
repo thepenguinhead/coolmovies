@@ -1,0 +1,28 @@
+services:
+  web:
+    build: .
+    image: cool-web
+    command: flask run --reload
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/app  # Mount the entire project directory
+    depends_on:
+      - db
+    env_file:
+      - .env  # Load all environment variables from .env
+    entrypoint: ["./entrypoint.sh"]  # Override the default entrypoint
+    restart: unless-stopped  # Restart policy
+    container_name: web
+
+  db:
+    image: postgres:13
+    env_file:
+      - .env  # Load PostgreSQL-related environment variables
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped  # Restart policy
+    container_name: db
+    
+volumes:
+  postgres_data:

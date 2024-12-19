@@ -1,0 +1,15 @@
+# .coveragerc
+[run]
+source = src/app
+branch = True
+omit =
+    */venv/*
+    */tests/*
+    */migrations/*
+
+[report]
+show_missing = True
+skip_covered = True
+
+[html]
+directory = htmlcov

@@ -1,0 +1,229 @@
+{% extends 'base.html' %}
+
+{% block title %}Profile - {{ user.username }}{% endblock %}
+
+{% block content %}
+<h1>{{ user.username }}'s Profile</h1>
+
+{% if user.id == current_user.id%}
+<a href="{{ url_for('main.profile_settings') }}" class="btn btn-secondary mt-3">Go to Profile Settings</a>
+{% endif %}
+{% if is_admin == True and user.id == current_user.id %}
+<a href="{{ url_for('main.admin') }}" class="btn btn-secondary mt-3">Go to Admin Page</a>
+{% endif %}
+<style>
+    .favorites-container-wrapper {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .favorites-container {
+        display: flex;
+        overflow-x: auto;
+        white-space: nowrap;
+        padding: 0 40px;
+        /* Add padding to make space for arrows */
+    }
+
+    .favorites-container .card {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        width: auto;
+        min-width: 187.5px;
+        /* Increased by 25% from 150px */
+        margin: 0 10px;
+        vertical-align: top;
+    }
+
+    .favorites-container .card img {
+        width: 100%;
+        height: auto;
+    }
+
+    .favorites-container .card-body {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        text-align: center;
+        width: 100%;
+        flex-grow: 1;
+    }
+
+    .favorites-container .card-title {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+    }
+
+    .arrow {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        background-color: rgba(0, 0, 0, 0.5);
+        color: white;
+        border: none;
+        padding: 10px;
+        cursor: pointer;
+        z-index: 1;
+    }
+
+    .arrow-left {
+        left: 0;
+    }
+
+    .arrow-right {
+        right: 0;
+    }
+</style>
+
+<div class="container mt-5">
+    {% if user.id == current_user.id%}
+    <h2>Your Favorite Movies</h2>
+    {% endif %}
+    {% if user.id != current_user.id%}
+    <h2>{{ user.username }}'s Favorite Movies</h2>
+    {% endif %}
+    {% if favorite_movies %}
+    <div class="favorites-container-wrapper">
+        <button class="arrow arrow-left" onclick="scrollFavorites('favoriteMoviesContainer', -300)">&#10094;</button>
+        <div class="favorites-container" id="favoriteMoviesContainer">
+            {% for movie in favorite_movies %}
+            <div class="card">
+                <a href="{{ url_for('main.media_detail', media_type='movie', media_id=movie.id) }}">
+                    <img src="{{ movie.poster_url }}" class="card-img-top" alt="{{ movie.title }} Poster">
+                </a>
+                <div class="card-body">
+                    <h5 class="card-title">{{ movie.title }}</h5>
+                    <p class="card-text"><strong>Release Year:</strong> {{ movie.releaseYear }}</p>
+                    <button class="btn btn-danger btn-sm"
+                        onclick="removeFromFavorites('movie', '{{ movie.id }}')">Remove from Favorites</button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <button class="arrow arrow-right" onclick="scrollFavorites('favoriteMoviesContainer', 300)">&#10095;</button>
+    </div>
+    {% else %}
+    {% if user.id == current_user.id%}
+    <p>You have no favorite Movies</p>
+    {% endif %}
+    {% if user.id != current_user.id%}
+    <p>{{ user.username }} has no favorite Movies</p>
+    {% endif %}
+    {% endif %}
+
+    {% if user.id == current_user.id%}
+    <h2>Your Favorite TV Shows</h2>
+    {% endif %}
+    {% if user.id != current_user.id%}
+    <h2>{{ user.username }}'s Favorite TV Shows</h2>
+    {% endif %}
+    {% if favorite_tvshows %}
+    <div class="favorites-container-wrapper">
+        <button class="arrow arrow-left" onclick="scrollFavorites('favoriteTVShowsContainer', -300)">&#10094;</button>
+        <div class="favorites-container" id="favoriteTVShowsContainer">
+            {% for tvshow in favorite_tvshows %}
+            <div class="card">
+                <a href="{{ url_for('main.media_detail', media_type='tvshow', media_id=tvshow.id) }}">
+                    <img src="{{ tvshow.poster_url }}" class="card-img-top" alt="{{ tvshow.title }} Poster">
+                </a>
+                <div class="card-body">
+                    <h5 class="card-title">{{ tvshow.title }}</h5>
+                    <p class="card-text"><strong>Release Year:</strong> {{ tvshow.release_date.year }}</p>
+                    <button class="btn btn-danger btn-sm"
+                        onclick="removeFromFavorites('tvshow', '{{ tvshow.id }}')">Remove from Favorites</button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <button class="arrow arrow-right" onclick="scrollFavorites('favoriteTVShowsContainer', 300)">&#10095;</button>
+    </div>
+    {% else %}
+    {% if user.id == current_user.id%}
+    <p>You have no favorite TV Shows</p>
+    {% endif %}
+    {% if user.id != current_user.id%}
+    <p>{{ user.username }} has no favorite TV Shows</p>
+    {% endif %}
+    {% endif %}
+
+    <div class="text-center mt-4">
+        <button class="btn btn-danger" onclick="confirmClearFavorites()">Clear Favorites</button>
+    </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmationModalLabel">Confirmation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="confirmationMessage">
+                <!-- Message will be set dynamically -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" onclick="clearFavorites()">Confirm</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function removeFromFavorites(mediaType, mediaId) {
+        fetch(`{{ url_for('main.remove_from_favorites', media_type='__type__', media_id='__id__') }}`.replace('__type__', mediaType).replace('__id__', mediaId), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token() }}'
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('confirmationMessage').textContent = data.message;
+                    const confirmationModal = new bootstrap.Modal(document.getElementById('confirmationModal'));
+                    confirmationModal.show();
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    alert(data.message);
+                }
+            });
+    }
+
+    function scrollFavorites(containerId, scrollAmount) {
+        const container = document.getElementById(containerId);
+        container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+
+    function confirmClearFavorites() {
+        document.getElementById('confirmationMessage').textContent = 'Are you sure you want to clear all favorites?';
+        const confirmationModal = new bootstrap.Modal(document.getElementById('confirmationModal'));
+        confirmationModal.show();
+    }
+
+    function clearFavorites() {
+        fetch(`{{ url_for('main.clear_favorites') }}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token() }}'
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('confirmationMessage').textContent = data.message;
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    alert(data.message);
+                }
+            });
+    }
+</script>
+{% endblock %}

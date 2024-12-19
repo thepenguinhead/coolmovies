@@ -1,0 +1,20 @@
+@startuml
+actor User
+boundary WebApp
+control FavoritesController
+entity Database
+
+User -> WebApp: Clicks "Add to Favorites"
+WebApp -> FavoritesController: Add Movie/TV to Favorites
+FavoritesController -> Database: Insert Movie/TV into Favorites Table
+Database --> FavoritesController: Acknowledge Success
+FavoritesController --> WebApp: Show Confirmation Message
+
+User -> WebApp: Clicks "Favorites" in Menu
+WebApp -> FavoritesController: Fetch User's Favorites
+FavoritesController -> Database: Query Favorites Table
+Database --> FavoritesController: Return List of Favorites
+FavoritesController --> WebApp: Render Favorites List Page
+WebApp --> User: Displays Favorites List
+
+@enduml

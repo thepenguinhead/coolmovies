@@ -1,0 +1,62 @@
+@startuml
+
+class User {
+    id
+    username
+    password
+    email
+    is_admin
+}
+
+class Movie {
+    id
+    title
+    release_date
+    genre
+    rating
+    description
+}
+
+class TVShow {
+    id
+    title
+    seasons
+    episodes
+    release_date
+    genre
+    rating
+    description
+}
+
+class Review {
+    id
+    rating
+    comment
+    user_id
+    movie_id
+    tvshow_id
+}
+
+class FavoritesList {
+    id
+    user_id
+    name
+}
+
+class Recommendation {
+    id
+    type
+    user_id
+    source_list_id
+}
+
+User  o-- FavoritesList
+FavoritesList  o--  Movie
+FavoritesList  o--  TVShow
+User  o--  Review
+Movie  o--  Review
+TVShow  o--  Review
+User  o--  Recommendation
+FavoritesList  o--  Recommendation
+
+@enduml

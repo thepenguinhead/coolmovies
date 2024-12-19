@@ -1,0 +1,37 @@
+@startuml usecase
+
+left to right direction
+
+:User: 
+:Administrator: 
+
+User <|-- Administrator
+
+package "Authentication" {
+    :User: --> (Registers an Account)
+    :User: --> (Logs In)
+    :User: --> (Logs Out)
+}
+
+package "Account Management" {
+    :User: --> (Edits Account Information)
+    :Administrator: --> (Views and Manages User Accounts)
+    :Administrator: --> (Grants/Revoke Admin Privileges)
+    :Administrator: --> (Deletes User Accounts)
+}
+
+package "Movie/TV Details" {
+    :User: --> (Searches for Movies/TV Shows)
+    :User: --> (Lists Search Results)
+    :User: --> (Views Movie/TV Details)
+    :User: --> (Adds/Removes Favorites)
+    :User: --> (Views Favorites List)
+    :User: --> (Adds a Review)
+    :Administrator: --> (Deletes User Reviews)
+        :User: --> (Views Recommendations)
+
+}
+
+
+
+@enduml

@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block title %}Search Results{% endblock %}
+
+{% block content %}
+<style>
+    /* Changed the color,shape, and size to the view details button */
+    .btn.btn-primary { 
+        background-color: #4da394;
+        border-color: #4da394;
+        border-radius: 15px;
+        width:180px;
+    }
+</style>
+<div class="container mt-5">
+    <h2>Search Results for "{{ query }}"</h2>
+    {% if results.movies or results.tv_shows %}
+    <div class="row">
+        {% for movie in results.movies %}
+        <div class="col-12 mb-3">
+            <div class="card">
+                <div class="row g-0">
+                    <div class="col-md-2">
+                        <img src="{{ movie.poster_url }}" class="img-fluid rounded-start" alt="{{ movie.title }} Poster"
+                            style="max-width: 175px;">
+                    </div>
+                    <div class="col-md-10">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ movie.title }}</h5>
+                            <p class="card-text"><strong>Type:</strong> Movie</p>
+                            <p class="card-text"><strong>Release Year:</strong> {{ movie.releaseYear }}</p>
+                            <a href="{{ url_for('main.media_detail', media_type='movie', media_id=movie.id) }}"
+                                class="btn btn-primary">View Details</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        {% for tv_show in results.tv_shows %}
+        <div class="col-12 mb-3">
+            <div class="card">
+                <div class="row g-0">
+                    <div class="col-md-2">
+                        <img src="{{ tv_show.poster_url }}" class="img-fluid rounded-start"
+                            alt="{{ tv_show.title }} Poster" style="max-width: 75px;">
+                    </div>
+                    <div class="col-md-10">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ tv_show.title }}</h5>
+                            <p class="card-text"><strong>Type:</strong> TV Show</p>
+                            <p class="card-text"><strong>Release Year:</strong> {{ tv_show.release_date.year }}</p>
+                            <a href="{{ url_for('main.media_detail', media_type='tvshow', media_id=tv_show.id) }}"
+                                class="btn btn-primary">View Details</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p>No results found.</p>
+    {% endif %}
+</div>
+{% endblock %}
