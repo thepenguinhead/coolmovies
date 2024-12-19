@@ -22,7 +22,7 @@ COPY . .
  
 # Copy and set up the entrypoint script
 COPY entrypoint.sh .
-RUN chmod 755 entrypoint.sh
+
  
 # Expose the port that the Flask app runs on.
 EXPOSE 5000

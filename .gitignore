@@ -117,4 +117,4 @@ dmypy.json
 docker-compose.override.yml
 
 # Alembic
-migrations/
+##migrations/
