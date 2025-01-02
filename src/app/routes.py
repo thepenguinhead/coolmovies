@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, jsonify, request, current_app
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db, bcrypt, cache
-from utils import fetch_poster
+from utils import fetch_data
 from ImdbScraper import videoScraper
 from app.models import User, Movie, TVShow, Favorite, Recommendation, Review
 from app.forms import RegistrationForm, LoginForm, ProfileForm, ReviewForm, AdminForm
@@ -26,14 +26,18 @@ def home():
     # Take 10 movies and posters for the movie using featch poster
     movies = Movie.query.order_by(func.random()).limit(10).all()
     tvshows = TVShow.query.order_by(func.random()).limit(10).all()
+    data = None
+
     for movie in movies:
         if not movie.poster_url or movie.poster_url == 'https://via.placeholder.com/300x450.png?text=No+Image':
-            movie.poster_url = fetch_poster(movie.id, 'movie')
+            data = fetch_data(movie.id, 'movie')
+            movie.poster_url = data.get("Poster")
             db.session.commit()
 
     for tvshow in tvshows:
         if not tvshow.poster_url or tvshow.poster_url == 'https://via.placeholder.com/300x450.png?text=No+Image':
-            tvshow.poster_url = fetch_poster(tvshow.id, 'series')
+            data = fetch_data(tvshow.id, 'series')
+            tvshow.poster_url = data.get("Poster")
             db.session.commit()
 
     return render_template('home.html', movies=movies, tvshows=tvshows)
@@ -86,6 +90,8 @@ def logout():
 def mainpage():
     # Recomendation for the user
     user_favorites = Favorite.query.filter_by(user_id=current_user.id).all()
+    data = None
+
     if not user_favorites:
         # No favorites yet, just show random recommendations
         randomMovies = Movie.query.order_by(func.random()).limit(10).all()
@@ -94,12 +100,14 @@ def mainpage():
         # Fetch and update movie posters
         for movie in randomMovies:
             if not movie.poster_url or movie.poster_url == 'https://via.placeholder.com/300x450.png?text=No+Image':
-                movie.poster_url = fetch_poster(movie.id, 'movie')
+                data = fetch_data(movie.id, 'movie')
+                movie.poster_url = data.get("Poster")
                 db.session.commit()
         # Fetch and update TV show posters
         for tvshow in randomTVShows:
             if not tvshow.poster_url or tvshow.poster_url == 'https://via.placeholder.com/300x450.png?text=No+Image':
-                tvshow.poster_url = fetch_poster(tvshow.id, 'series')
+                data = fetch_data(tvshow.id, 'movie')
+                tvshow.poster_url = data.get("Poster")
                 db.session.commit()
 
         recommendations_movies = randomMovies
@@ -173,12 +181,15 @@ def mainpage():
         # Fetch and update movie posters and TV show posters
         for movie in recommendations_movies:
             if not movie.poster_url or movie.poster_url == 'https://via.placeholder.com/300x450.png?text=No+Image':
-                movie.poster_url = fetch_poster(movie.id, 'movie')
+                data = fetch_data(movie.id, 'movie')
+                movie.poster_url = data.get("Poster")
                 db.session.commit()
 
         for tvshow in recommendations_tvshows:
             if not tvshow.poster_url or tvshow.poster_url == 'https://via.placeholder.com/300x450.png?text=No+Image':
-                tvshow.poster_url = fetch_poster(tvshow.id, 'series')
+
+                data = fetch_data(tvshow.id, 'series')
+                tvshow.poster_url = data.get("Poster")
                 db.session.commit()
 
     return render_template('mainpage.html', recommendations_movies=recommendations_movies, recommendations_tvshows=recommendations_tvshows)
@@ -196,13 +207,29 @@ def media_detail(media_type, media_id):
     reviews = Review.query.filter_by(movie_id=media.id if media_type == 'movie' else None,
                                      tvshow_id=media.id if media_type == 'tvshow' else None).all()
     delete_form = DeleteForm()
-
     dt = datetime.datetime.now()
     access_time = int(dt.strftime("%H%M"))  # military time for easy comparison
+    data = None
 
-    if media.poster_url == 'https://via.placeholder.com/300x450.png?text=No+Image' or None or "N/A":
-        media.poster_url = fetch_poster(
+    # TODO: finish modifing routes to get the following data from the api
+    # if there is no season data, get data  (if tv show)
+    # if there is no episode data, get data (if tv show)
+    # if there is no description data, get data
+    # if there is no poster url, get data
+
+    if media_type == 'tvshow' and media.seasons != -1 or media.description != 'No description available.' or media.poster_url == 'https://via.placeholder.com/300x450.png?text=No+Image' or None or "N/A": 
+        data = fetch_data(
             media.id, 'movie' if media_type == 'movie' else 'series')
+        media.poster_url = data.get("Poster")
+        media.description = data.get("Plot")
+        media.seasons = data.get("totalSeasons")
+        db.session.commit()
+
+    if media_type == 'movie' and media.description != 'No description available.' or media.description != 'No description available.' or media.poster_url == 'https://via.placeholder.com/300x450.png?text=No+Image' or None or "N/A": 
+        data = fetch_data(
+            media.id, 'movie' if media_type == 'movie' else 'series')
+        media.poster_url = data.get("Poster")
+        media.description = data.get("Plot")
         db.session.commit()
 
     if media.trailer_fetch_time == None:  # check if the trailer exists in database already
@@ -449,6 +476,7 @@ def clear_favorites():
 @login_required
 def random_route():
     choice = random.choice(['movie', 'tvshow'])
+    data = None
 
     if choice == 'movie':
         random_media = Movie.query.order_by(func.random()).first()
@@ -457,8 +485,10 @@ def random_route():
 
     if random_media:
         if not random_media.poster_url or random_media.poster_url == 'https://via.placeholder.com/300x450.png?text=No+Image':
-            random_media.poster_url = fetch_poster(
+            
+            data = fetch_data(
                 random_media.id, 'movie' if choice == 'movie' else 'series')
+            random_media.poster_url = data.get("Poster")
             db.session.commit()
         return redirect(url_for('main.media_detail', media_type=choice, media_id=random_media.id))
     else:
