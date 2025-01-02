@@ -52,6 +52,8 @@ class Movie(db.Model):
     averageRating = db.Column(db.Float, nullable=True)
     numVotes = db.Column(db.Integer, nullable=True)
     releaseYear = db.Column(db.Integer, nullable=True)
+    description = db.Column(db.Text, nullable=False,
+                            default='No description available.')
     poster_url = db.Column(db.String(
         500), default='https://via.placeholder.com/300x450.png?text=No+Image')
 
@@ -72,8 +74,8 @@ class TVShow(db.Model):
     __tablename__ = 'tv_show'
     id = db.Column(db.String, primary_key=True)  # Changed to String
     title = db.Column(db.String(255), nullable=False)
-    seasons = db.Column(db.Integer, nullable=False, default=1)
-    episodes = db.Column(db.Integer, nullable=False, default=1)
+    seasons = db.Column(db.Integer, nullable=False, default=-1)
+    episodes = db.Column(db.Integer, nullable=False, default=-1)
     release_date = db.Column(db.Date, nullable=False, default=datetime.now)
     genre = db.Column(db.String(100), nullable=False)
     rating = db.Column(db.Integer, nullable=False, default=5)
