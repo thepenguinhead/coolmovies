@@ -29,13 +29,21 @@ def videoScraper(ID):
         except:
             return None # No Trailer Exists
         
-        videoElementPassOne = re.search(r"https:\/\/imdb-video\.media-imdb\.com[^\"]*", JScript) # obtains video using regular expression
-        
-        videoElementPassTwo = videoElementPassOne.group() 
-        videoElementPassTwo = videoElementPassTwo.replace("\\u0026", "&")
+        try:
 
-        return videoElementPassTwo
-    
+            videoElementPassOne = re.search(r"https:\/\/imdb-video\.media-imdb\.com[^\"]*", JScript) # obtains video using regular expression
+
+            if videoElementPassOne == None:
+                 videoElementPassOne = re.search(r"https:\/\/imdb-video-wab\.media-imdb\.com[^\"]*", JScript)
+            
+            videoElementPassTwo = videoElementPassOne.group() 
+            videoElementPassTwo = videoElementPassTwo.replace("\\u0026", "&")
+            return videoElementPassTwo
+
+        except Exception as e: # catch none type error if regular expression was not found
+            print(e)
+            return None 
+        
     print("Bad Repsonse")
     return None
 
