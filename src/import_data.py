@@ -5,7 +5,7 @@ from datetime import datetime
 from sqlalchemy import text
 from app import create_app, db
 from app.models import Movie, TVShow
-from utils import fetch_poster  # Ensure utils.py has the fetch_poster function
+from utils import fetch_data  # Ensure utils.py has the fetch_data function
 
 app = create_app()
 
@@ -77,6 +77,8 @@ def import_data(csv_filepath):
                         averageRating=averageRating,
                         numVotes=numVotes,
                         releaseYear=releaseYear,
+                        description=row.get('description', '').strip(
+                        ) or 'No description available.',
                         poster_url='https://via.placeholder.com/300x450.png?text=No+Image'
                     )
                     db.session.add(movie)
@@ -99,9 +101,9 @@ def import_data(csv_filepath):
                         title=title,
                         genre=genres,
                         seasons=int(row.get('seasons', 0)) if row.get(
-                            'seasons') else 1,
+                            'seasons') else -1,
                         episodes=int(row.get('episodes', 0)) if row.get(
-                            'episodes') else 1,
+                            'episodes') else -1,
                         release_date=row.get(
                             'release_date', '').strip() or datetime.now(),
                         description=row.get('description', '').strip(
