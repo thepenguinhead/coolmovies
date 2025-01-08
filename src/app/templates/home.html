@@ -107,7 +107,9 @@
         {% set angle = loop.index0 * (360 / movie_count) %}
         <!-- Each item rotated around Y-axis to form a circle -->
         <div class="item" style="transform: rotateY({{ angle }}deg) translateZ(var(--translate-z));">
-            <img src="{{ movie.poster_url }}" alt="{{ movie.title }} poster">
+            <a href="{{ url_for('main.media_detail', media_type='movie', media_id=movie.id) }}">
+                <img src="{{ movie.poster_url }}" class="card-img-top" alt="{{ movie.title }} Poster">
+            </a>
         </div>
         {% endfor %}
     </div>
@@ -121,7 +123,9 @@
         {% set angle = loop.index0 * (360 / tvshow_count) %}
         <!-- Same arrangement for TV shows -->
         <div class="item" style="transform: rotateY({{ angle }}deg) translateZ(var(--translate-z));">
-            <img src="{{ tvshow.poster_url }}" alt="{{ tvshow.title }} poster">
+            <a href="{{ url_for('main.media_detail', media_type='tvshow', media_id=tvshow.id) }}">
+                <img src="{{ tvshow.poster_url }}" alt="{{ tvshow.title }} poster">
+            </a>
         </div>
         {% endfor %}
     </div>
