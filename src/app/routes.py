@@ -12,7 +12,6 @@ from flask_wtf import FlaskForm
 from flask_caching import Cache
 import os
 
-
 class DeleteForm(FlaskForm):
     pass
 
@@ -210,12 +209,6 @@ def media_detail(media_type, media_id):
     dt = datetime.datetime.now()
     access_time = int(dt.strftime("%H%M"))  # military time for easy comparison
     data = None
-
-    # TODO: finish modifing routes to get the following data from the api
-    # if there is no season data, get data  (if tv show)
-    # if there is no episode data, get data (if tv show)
-    # if there is no description data, get data
-    # if there is no poster url, get data
 
     if media_type == 'tvshow' and media.seasons != -1 or media.description != 'No description available.' or media.poster_url == 'https://via.placeholder.com/300x450.png?text=No+Image' or None or "N/A": 
         data = fetch_data(
