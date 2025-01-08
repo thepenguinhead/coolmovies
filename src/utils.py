@@ -6,6 +6,9 @@
     :return: Poster URL or a placeholder image URL
 """
 
+# TODO: exclude any descriptions that end in "..."
+# TODO: Handle when a link for poster exists but the link itself leads to a blank page (see "Inside")
+
 import os
 import requests
 
@@ -21,7 +24,8 @@ def fetch_data(id, media_type='movie'):
         params = {
             'i': id,
             'type': media_type,
-            'apikey': api_key
+            'apikey': api_key,
+            'plot' : "full"
         }
         response = requests.get('https://www.omdbapi.com/', params=params)
         data = response.json()
@@ -35,7 +39,6 @@ def fetch_data(id, media_type='movie'):
     except Exception as e:
         print(e)
         return 'https://via.placeholder.com/300x450.png?text=No+Image'
-    
     
 if __name__ == '__main__':
     
