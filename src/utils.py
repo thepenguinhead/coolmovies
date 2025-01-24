@@ -6,7 +6,6 @@
     :return: Poster URL or a placeholder image URL
 """
 
-# TODO: exclude any descriptions that end in "..."
 # TODO: Handle when a link for poster exists but the link itself leads to a blank page (see "Inside")
 
 import os
